@@ -48,25 +48,35 @@
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
+
+typedef enum {wait, process} status;
+
+status provera_stanja()
+{
+    status input = wait;
+}
+
 void obrada_zahteva();
-void static unlockcompareFingerprints();
-void static regFingerprints();
-void static menu();
-void static fingerprintOptions();
-void static checknoFingerprints();
-void static deleteFingerprint();
+void unlockcompareFingerprints();
+void regFingerprints();
+void menu();
+void fingerprintOptions();
+void checknoFingerprints();
+void deleteFingerprint();
 
 void obrada_zahreva(void)
 {               
         
-    uint8_t c;
+    char c;
     c = EUSART1_Read();  
         switch(c)
         {
-            case '1':
+            case 'y':
                 unlockcompareFingerprints();
                 break;
-            
+            case 'n':
+                printf("Back to main...\n");
+                break;
             default:
                 printf("Invalid input! \n");
                 break;
@@ -226,7 +236,6 @@ void main(void)
     */ 
     
     // napraviti stanja i switch case momente 
-    // kad primim nesto na uart promeni stanje
     // SWITCH CASE STANJE
     
     
@@ -237,8 +246,7 @@ void main(void)
     {   
         
         printf("1. Compare Fingerprints\n");
-        printf("2. Turn Off\n");
-        printf("Input number: \n"); 
+        printf("Input y/n: \n"); 
         while(!EUSART1_is_rx_ready())
             
         if(EUSART1_is_rx_ready())
