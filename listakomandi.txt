@@ -1,0 +1,18 @@
+<C>RegisterFingerprint</C>
+	*Registracija otiska
+<C>RegisterOneFp=xxx</C>
+	*Registruj otisak na odredjenoj lokaciji i ako postoji obrisi postojeci otisak
+<C>CompareFingerprint</C>
+	*Uporedjivanje otiska
+<C>CheckRegisteredNo</C>
+	*Broj Registrovanih otisaka
+<C>UnlockComparePWD=sss</C>
+	*Otkljucavanje uredjaja putem sifre
+<C>SetPWD=sss</C>
+	*Setovanje sifre
+<C>ClearPWD</C>
+	*Brisanje sifre
+C>GetUnlockTimeout</C>
+	*<R>Timeout=d</R> Otkljucavanje nakon odredjenog vremena
+<C>UnlockTimeout=d</C>
+	*podesiti vreme za otkljucavanje
