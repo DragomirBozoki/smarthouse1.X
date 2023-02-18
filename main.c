@@ -17,7 +17,6 @@
         Device            :  PIC18F87K22
         Driver Version    :  2.00
 */
-
 /*
     (c) 2018 Microchip Technology Inc. and its subsidiaries. 
     
@@ -43,18 +42,14 @@
 /*
                          Main application
  */
-
 #include "mcc_generated_files/mcc.h"
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
+#include <time.h>
+//#include <unistd.h>
 
-typedef enum {wait, process} status;
-
-status provera_stanja()
-{
-    status input = wait;
-}
+typedef enum {process} status;
 
 void obrada_zahteva();
 void unlockcompareFingerprints();
@@ -66,7 +61,6 @@ void deleteFingerprint();
 
 void obrada_zahreva(void)
 {               
-        
     char c;
     c = EUSART1_Read();  
         switch(c)
@@ -82,62 +76,168 @@ void obrada_zahreva(void)
                 break;
         }
 }
-void unlockcompareFingerprints(void)
-{
-    char s2;
-    static bool flag = 0;
+void unlockcompareFingerprints(int counter)
+{   
+    while(counter<2)
+    {
+        char s2;
+        static bool flag = 0;
+
+        printf("===CompareFingerprint====\n");
+        strcpy(&s2,"<C>UnlockCompareFp</C>"); 
+        //response
+
+        uint8_t i;
+        int len = strlen(&s2);             
+        for (i = 0; i < len; i++)
+        {
+            EUSART2_Write(s2[i]);     
+        }
+        __delay_ms(100);
+
+        if(EUSART2_is_rx_ready())
+        {
+            i=0;
+            while(eusart2RxCount!=0)
+            {
+                s2[i] = EUSART2_Read();
+                i++;
+            }
+            
+            s2[i]=0;
+            EUSART1_Write(s2);
+
+            uint8_t compare =  "<R>FAIL</R>";
+            int res = strcmp(s2, compare);
+
+            if(res == 1) 
+            {   printf("Welcome! \n");
+                printf("%s\n",s2);
+                //EUSART1_Write(s2);
+                //flag = 1;
+                menu();
+            }
+            
+            else
+            {
+                printf("Fingerprints did not match!\n");
+                counter++;
+                unlockcompareFingerprints(counter);
+            }      
+        }
+    }
+    if(counter == 2)
+    {
+    printf("Too many attempts, Fingerprints did not match 3 times!");
+    }
+}
     
-    printf("===CompareFingerprint====\n");
-    strcpy(&s2,"<C>UnlockCompareFp</C>"); 
-                
-    char i;
+void checknoFingerprints(void)
+{
+    uint8_t c;
+    char s2;
+    c = EUSART1_Read();
+    
+    printf("===Register Fingerprint====\n");
+    strcpy(&s2,"<C>CheckRegisteredNo</C>"); 
+    
+    uint8_t i;
     int len = strlen(&s2);             
     for (i = 0; i < len; i++)
     {
-        EUSART1_Write(i);     
+        EUSART2_Write(s2[i]);     
     }
+    __delay_ms(100);
+    
     if(EUSART2_is_rx_ready())
-    {
-        s2 = EUSART2_Read();
-        EUSART1_Write(s2);
-        
-        if(s2 != "<R>FAIL</R>")
+    {   
+        int i = 0;
+        while(eusart2RxCount != 0)
         {   
-            printf("Welcome! \n");
-            EUSART1_Write(s2);
-            flag = 1;
+            s2[i] = EUSART2_Read();
+            i++;
         }
+        
+        s2[i] = 0;
+        
+        EUSART1_Write(s2);
+        printf("%s\n", s2);
+    }
+}
     
-    
-        if(flag == 1)
+void regFingerprints(int counter)
+{   
+    if(counter < 2)
+    {
+        char s2;
+        printf("===Register Fingerprint====\n");
+        strcpy(&s2,"<C>RegisterFingerprint</C>"); 
+
+        uint8_t i;
+        int len = strlen(&s2);             
+        for (i = 0; i < len; i++)
         {
-            menu();
+            EUSART2_Write(s2[i]);     
+        }
+        __delay_ms(100);
+        
+        if(EUSART2_is_rx_ready())
+        {   
+            int i = 0;
+            while(eusart2RxCount != 0)
+            {   
+                s2[i] = EUSART2_Read();
+                i++;
+            }
+            s2[i] = 0;
+            EUSART1_Write(s2);
+
+            // OK_String: <R>OK</R>
+
+            uint8_t compare = "<R>OK<R>";
+            int res = strcmp(s2, compare);
+            if(res == 0)
+            {
+
+                while(eusart2RxCount != 0)
+                {   
+                    s2[i] = EUSART2_Read();
+                    i++;
+                }
+                s2[i] = 0;
+                EUSART1_Write(s2);
+
+                uint8_t compare = " <R>FINISHED<R>";
+                int res = strcmp(s2, compare);
+                while(res != 0)
+                {
+                    printf("Put your finger on sensor...");
+                    int res = strcmp(s2, compare);
+                    __delay_ms(1000);
+                    
+                }
+                if(res == 0)
+                {   
+                    printf("Done!\n");
+                    printf("&s\n", s2);                            
+                }
+
+            }
         }
         else
         {
-            printf("Fingerprints did not match!\n");
+        printf("Error, trying again...");
+        counter++;
+        regFingerprints(counter);
         }
-    }    
-}
-    
-void regFingerprints()
-{
-    char s2;
-    printf("===Register Fingerprint====\n");
-    strcpy(&s2,"<C>RegisterFingerprint</C>"); 
-                
-    char i;
-    int len = strlen(&s2);             
-    for (i = 0; i < len; i++)
-    {
-        EUSART1_Write(i);     
+        
     }
-    if(EUSART2_is_rx_ready())
+    else
     {
-        s2 = EUSART2_Read();
-        EUSART1_Write(s2);
+        printf("Too many attempts!");
+        printf("Back to menu...");    
+        menu();
     }
-
 }
 
 void fingerpritnsOptions()
@@ -154,7 +254,7 @@ void fingerpritnsOptions()
         switch(c)
         {
             case '1':
-                unlockcompareFingerprints();
+                regFingerprints(0);
                 break;
             
             case '2':
@@ -172,8 +272,10 @@ void fingerpritnsOptions()
 
 }
 
+
 void menu()
 {
+    
     uint8_t c;
     printf("1. Turn Alarm ON \n");
     printf("2. Turn Alarm OFF \n");
@@ -244,7 +346,6 @@ void main(void)
     // EUSART2 WRITE IF EUSART 1 READ    
     while (1)
     {   
-        
         printf("1. Compare Fingerprints\n");
         printf("Input y/n: \n"); 
         while(!EUSART1_is_rx_ready())

@@ -24,7 +24,7 @@ CLEAN_SUBPROJECTS=${CLEAN_SUBPROJECTS_${SUBPROJECTS}}
 
 
 # Project Name
-PROJECTNAME=smarthouse1.X
+PROJECTNAME=smarthouse1.X-main
 
 # Active Configuration
 DEFAULTCONF=default
