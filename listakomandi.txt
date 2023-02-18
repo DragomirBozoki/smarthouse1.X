@@ -16,3 +16,4 @@ C>GetUnlockTimeout</C>
 	*<R>Timeout=d</R> Otkljucavanje nakon odredjenog vremena
 <C>UnlockTimeout=d</C>
 	*podesiti vreme za otkljucavanje
+<C>ClearOneFp=xxx</C>
