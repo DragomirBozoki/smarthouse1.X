@@ -1312,7 +1312,7 @@
       </entry>
       <entry>
          <key class="com.microchip.mcc.core.tokenManager.CustomKey" moduleName="Pin Module" name="Custom Name RD0"/>
-         <value/>
+         <value>IO_RD0</value>
       </entry>
       <entry>
          <key class="com.microchip.mcc.core.tokenManager.CustomKey" moduleName="Pin Module" name="Custom Name RD1"/>
@@ -1592,7 +1592,7 @@
       </entry>
       <entry>
          <key class="com.microchip.mcc.core.tokenManager.CustomKey" moduleName="Pin Module" name="RD0"/>
-         <value>disabled</value>
+         <value>input</value>
       </entry>
       <entry>
          <key class="com.microchip.mcc.core.tokenManager.CustomKey" moduleName="Pin Module" name="RD1"/>
@@ -6022,7 +6022,7 @@
       </entry>
       <entry>
          <file>mcc_generated_files\pin_manager.h</file>
-         <hash>571bd3afbd0fed76cd4b46681dca550587d1af2882b507ab461af109bdc954d6</hash>
+         <hash>acb0dac2cdec90e4e9c8373eb3ac1338e30a6a6080f9abb3127950b25af3f423</hash>
       </entry>
    </generatedFileHashHistoryMap>
 </config>

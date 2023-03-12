@@ -81,6 +81,17 @@
 #define RC7_SetDigitalInput()    do { TRISCbits.TRISC7 = 1; } while(0)
 #define RC7_SetDigitalOutput()   do { TRISCbits.TRISC7 = 0; } while(0)
 
+// get/set IO_RD0 aliases
+#define IO_RD0_TRIS                 TRISDbits.TRISD0
+#define IO_RD0_LAT                  LATDbits.LATD0
+#define IO_RD0_PORT                 PORTDbits.RD0
+#define IO_RD0_SetHigh()            do { LATDbits.LATD0 = 1; } while(0)
+#define IO_RD0_SetLow()             do { LATDbits.LATD0 = 0; } while(0)
+#define IO_RD0_Toggle()             do { LATDbits.LATD0 = ~LATDbits.LATD0; } while(0)
+#define IO_RD0_GetValue()           PORTDbits.RD0
+#define IO_RD0_SetDigitalInput()    do { TRISDbits.TRISD0 = 1; } while(0)
+#define IO_RD0_SetDigitalOutput()   do { TRISDbits.TRISD0 = 0; } while(0)
+
 // get/set RG1 procedures
 #define RG1_SetHigh()            do { LATGbits.LATG1 = 1; } while(0)
 #define RG1_SetLow()             do { LATGbits.LATG1 = 0; } while(0)

@@ -10,9 +10,9 @@ CND_CONF=default
 CND_DISTDIR=dist
 TMPDIR=build/${CND_CONF}/${IMAGE_TYPE}/tmp-packaging
 TMPDIRNAME=tmp-packaging
-OUTPUT_PATH=dist/${CND_CONF}/${IMAGE_TYPE}/smarthouse1.X-main.${IMAGE_TYPE}.${OUTPUT_SUFFIX}
-OUTPUT_BASENAME=smarthouse1.X-main.${IMAGE_TYPE}.${OUTPUT_SUFFIX}
-PACKAGE_TOP_DIR=smarthouse1.x-main/
+OUTPUT_PATH=dist/${CND_CONF}/${IMAGE_TYPE}/SSSSSSMART.${IMAGE_TYPE}.${OUTPUT_SUFFIX}
+OUTPUT_BASENAME=SSSSSSMART.${IMAGE_TYPE}.${OUTPUT_SUFFIX}
+PACKAGE_TOP_DIR=ssssssmart/
 
 # Functions
 function checkReturnCode
@@ -57,15 +57,15 @@ mkdir -p ${TMPDIR}
 
 # Copy files and create directories and links
 cd "${TOP}"
-makeDirectory ${TMPDIR}/smarthouse1.x-main/bin
+makeDirectory ${TMPDIR}/ssssssmart/bin
 copyFileToTmpDir "${OUTPUT_PATH}" "${TMPDIR}/${PACKAGE_TOP_DIR}bin/${OUTPUT_BASENAME}" 0755
 
 
 # Generate tar file
 cd "${TOP}"
-rm -f ${CND_DISTDIR}/${CND_CONF}/package/smarthouse1.x-main.tar
+rm -f ${CND_DISTDIR}/${CND_CONF}/package/ssssssmart.tar
 cd ${TMPDIR}
-tar -vcf ../../../../${CND_DISTDIR}/${CND_CONF}/package/smarthouse1.x-main.tar *
+tar -vcf ../../../../${CND_DISTDIR}/${CND_CONF}/package/ssssssmart.tar *
 checkReturnCode
 
 # Cleanup

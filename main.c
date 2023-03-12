@@ -49,9 +49,7 @@
 #include <time.h>
 //#include <unistd.h>
 
-typedef enum {process} status;
-
-void obrada_zahteva();
+void obrada_zahteva(void);
 void unlockcompareFingerprints();
 void regFingerprints();
 void menu();
@@ -59,11 +57,73 @@ void fingerprintOptions();
 void checknoFingerprints();
 void deleteFingerprint();
 
-void obrada_zahreva(void)
+void main(void)
+{
+    // Initialize the device
+    SYSTEM_Initialize();
+    
+    // If using interrupts in PIC18 High/Low Priority Mode you need to enable the Global High and Low Interrupts
+    // If using interrupts in PIC Mid-Range Compatibility Mode you need to enable the Global and Peripheral Interrupts
+    // Use the following macros to:
+
+    // Enable the Global Interrupts
+    INTERRUPT_GlobalInterruptEnable();
+
+    // Disable the Global Interrupts
+    //INTERRUPT_GlobalInterruptDisable();
+
+    // Enable the Peripheral Interrupts
+    INTERRUPT_PeripheralInterruptEnable();
+
+    //Disable the Peripheral Interrupts
+    //INTERRUPT_PeripheralInterruptDisable();
+    /**
+    cekaj na zahtev
+    ako zahtev - stanje = parsiraj zahtev
+    u suprotnom cekaj
+    ako zahtev dobar - ocitaj senzor
+    ako zahtev nije dobar predhodni korak
+    ocitan senzor - interpetiraj rezultate
+    ako ocitavanje ne uspe jos jednom
+    ako nije dobra interpetacija ponovo procitaj podatak
+    ako je dobar posalji odgovor 
+    ako je uspeo da posaje 
+    */ 
+    
+    // napraviti stanja i switch case momente 
+    // SWITCH CASE STANJE
+    
+    // EUSART2 WRITE IF EUSART 1 READ    
+    while (1)
+    {   
+        printf("1. Compare Fingerprints\n");
+        printf("Input y/n: \n"); 
+        while(!EUSART1_is_rx_ready());
+                   
+        obrada_zahteva();
+
+    }
+}
+/**
+ End of File
+*/
+void obrada_zahteva(void)
 {               
-    char c;
-    c = EUSART1_Read();  
-        switch(c)
+    char c[2];
+    char tmp=0;
+    uint8_t i=0;
+    
+    while(tmp!='\n' || i<2){
+        tmp = EUSART1_Read();  
+        c[i]=tmp;
+        i++;
+    }
+    if(i!=2){
+        while(eusart1RxCount!=0)
+            EUSART1_Read();
+    }
+    else{
+        switch(c[0])
         {
             case 'y':
                 unlockcompareFingerprints();
@@ -75,74 +135,202 @@ void obrada_zahreva(void)
                 printf("Invalid input! \n");
                 break;
         }
+    }
 }
-void unlockcompareFingerprints(int counter)
+
+void unlockcompareFingerprints()
 {   
-    while(counter<2)
+    uint8_t counter = 0;
+    while(counter<3)
     {
-        char s2;
+        //char s1[20];
+        char s2[30];
         static bool flag = 0;
 
-        printf("===CompareFingerprint====\n");
-        strcpy(&s2,"<C>UnlockCompareFp</C>"); 
-        //response
+        printf("Put finger on sensor\n");
+        
+        strcpy(s2,"<C>CompareFingerprint</C>"); 
 
         uint8_t i;
-        int len = strlen(&s2);             
-        for (i = 0; i < len; i++)
+        
+        for (i = 0; i < strlen(s2); i++)
         {
             EUSART2_Write(s2[i]);     
         }
-        __delay_ms(100);
+        //__delay_ms(100);
+        
+        while(!EUSART2_is_rx_ready());
+        
+        /* <R>OK</R>
+         * Please input fingerprint to compare.
+         * Mismatch! or Matched!
+         * <R>FAIL</R> or <R>PASS_x</R>
+         */
+        while(EUSART2_Read()!='!');
+        
+        __delay_ms(10);
+        while(EUSART2_Read()!='\n');
+        
+        char a=0;
 
-        if(EUSART2_is_rx_ready())
+        while(!EUSART2_is_rx_ready());// Wait for <R>FAIL</R> or <R>PASS_x</R>
+        __delay_ms(10);
+        i=0;
+        while(eusart2RxCount!=0 && i!=30)
         {
-            i=0;
-            while(eusart2RxCount!=0)
-            {
-                s2[i] = EUSART2_Read();
-                i++;
-            }
-            
-            s2[i]=0;
-            EUSART1_Write(s2);
-
-            uint8_t compare =  "<R>FAIL</R>";
-            int res = strcmp(s2, compare);
-
-            if(res == 1) 
-            {   printf("Welcome! \n");
-                printf("%s\n",s2);
-                //EUSART1_Write(s2);
-                //flag = 1;
-                menu();
-            }
-            
-            else
-            {
-                printf("Fingerprints did not match!\n");
-                counter++;
-                unlockcompareFingerprints(counter);
-            }      
+            s2[i] = EUSART2_Read();
+            i++;
         }
+        if(i==30){
+            printf("Greska prijema\n");
+            while(eusart2RxCount!=0)
+                EUSART2_Read();
+        }
+
+        s2[i]=0;
+        printf("%s\n",s2); // Provera
+
+        if(strcmp(s2, "<R>FAIL</R>")==0)
+        {
+            printf("Fingerprints did not match!\n");
+            counter++;
+            printf("Try again!\n");
+        }   
+        else if(s2[0]=='<' && s2[1]=='R' && s2[2]=='>' && s2[3]=='P' && s2[4]=='A'&& s2[5] == 'S' && s2[5]=='S'){   
+            printf("Welcome! \n");    
+            menu();
+        }
+        else
+        {
+            printf("Error!");
+            counter++;
+        }
+   
     }
-    if(counter == 2)
+    if(counter == 3)
     {
     printf("Too many attempts, Fingerprints did not match 3 times!");
     }
 }
+
+void obrada_zahteva(void)
+{               
+    char c[2];
+    char tmp=0;
+    uint8_t i=0;
     
-void checknoFingerprints(void)
+    while(tmp!='\n' || i<2){
+        tmp = EUSART1_Read();  
+        c[i]=tmp;
+        i++;
+    }
+    if(i!=2){
+        while(eusart1RxCount!=0)
+            EUSART1_Read();
+    }
+    else{
+        switch(c[0])
+        {
+            case 'y':
+                unlockcompareFingerprints();
+                break;
+            case 'n':
+                printf("Back to main...\n");
+                break;
+            default:
+                printf("Invalid input! \n");
+                break;
+        }
+    }
+}
+
+void checkRegisteredFp()
+{   
+    uint8_t counter = 0;
+    while(counter<3)
+    {
+        //char s1[20];
+        char s2[30];
+        static bool flag = 0;
+
+        printf("Put finger on sensor\n");
+        
+        strcpy(s2,"<C>CheckRegisteredNo</C>"); 
+
+        uint8_t i;
+        
+        for (i = 0; i < strlen(s2); i++)
+        {
+            EUSART2_Write(s2[i]);     
+        }
+        //__delay_ms(100);
+        
+        while(!EUSART2_is_rx_ready());
+        
+        /* <R>OK</R>
+         * Please input fingerprint to compare.
+         * Mismatch! or Matched!
+         * <R>FAIL</R> or <R>PASS_x</R>
+         */
+        while(EUSART2_Read()!='>');
+        
+        __delay_ms(10);
+        while(EUSART2_Read()!='\n');
+        
+        char a=0;
+
+        while(!EUSART2_is_rx_ready());// Wait for <R>FAIL</R> or <R>PASS_x</R>
+        __delay_ms(10);
+        i=0;
+        while(eusart2RxCount!=0 && i!=30)
+        {
+            s2[i] = EUSART2_Read();
+            i++;
+        }
+        if(i==30){
+            printf("Greska prijema\n");
+            while(eusart2RxCount!=0)
+                EUSART2_Read();
+        }
+
+        s2[i]=0;
+        printf("%s\n",s2); // Provera
+
+        if(strcmp(s2, "<R>FAIL</R>")==0)
+        {
+            printf("Fingerprints did not match!\n");
+            counter++;
+            printf("Try again!\n");
+        }   
+        else if(s2[0]=='<' && s2[1]=='R' && s2[2]=='>' && s2[3]=='P' && s2[4]=='A'&& s2[5] == 'S' && s2[5]=='S'){   
+            printf("Welcome! \n");    
+            menu();
+        }
+        else
+        {
+            printf("Error!");
+            counter++;
+        }
+   
+    }
+    if(counter == 3)
+    {
+    printf("Too many attempts, Fingerprints did not match 3 times!");
+    }
+}
+
+//"<C>CheckRegisteredNo</C>"    
+/*void checknoFingerprints(void)
 {
     uint8_t c;
-    char s2;
+    char s2[40];
     c = EUSART1_Read();
     
     printf("===Register Fingerprint====\n");
-    strcpy(&s2,"<C>CheckRegisteredNo</C>"); 
+    strcpy(s2,); 
     
     uint8_t i;
-    int len = strlen(&s2);             
+    int len = strlen(s2);             
     for (i = 0; i < len; i++)
     {
         EUSART2_Write(s2[i]);     
@@ -160,7 +348,7 @@ void checknoFingerprints(void)
         
         s2[i] = 0;
         
-        EUSART1_Write(s2);
+        printf("%s\n",s2);
         printf("%s\n", s2);
     }
 }
@@ -169,12 +357,12 @@ void regFingerprints(int counter)
 {   
     if(counter < 2)
     {
-        char s2;
+        char s2[40];
         printf("===Register Fingerprint====\n");
-        strcpy(&s2,"<C>RegisterFingerprint</C>"); 
+        strcpy(s2,"<C>RegisterFingerprint</C>"); 
 
         uint8_t i;
-        int len = strlen(&s2);             
+        int len = strlen(s2);             
         for (i = 0; i < len; i++)
         {
             EUSART2_Write(s2[i]);     
@@ -190,12 +378,12 @@ void regFingerprints(int counter)
                 i++;
             }
             s2[i] = 0;
-            EUSART1_Write(s2);
+            printf("&s\n", s2);
 
             // OK_String: <R>OK</R>
 
-            uint8_t compare = "<R>OK<R>";
-            int res = strcmp(s2, compare);
+            //uint8_t compare = "<R>OK<R>";
+            int res = strcmp(s2, "<R>OK<R>");
             if(res == 0)
             {
 
@@ -205,14 +393,13 @@ void regFingerprints(int counter)
                     i++;
                 }
                 s2[i] = 0;
-                EUSART1_Write(s2);
+                printf("&s\n", s2);
 
-                uint8_t compare = " <R>FINISHED<R>";
-                int res = strcmp(s2, compare);
+                int res = strcmp(s2, "<R>FINISHED<R>");
                 while(res != 0)
                 {
                     printf("Put your finger on sensor...");
-                    int res = strcmp(s2, compare);
+                    int res = strcmp(s2, "<R>FINISHED<R>");
                     __delay_ms(1000);
                     
                 }
@@ -239,6 +426,7 @@ void regFingerprints(int counter)
         menu();
     }
 }
+*/
 
 void fingerpritnsOptions()
 {   
@@ -249,20 +437,20 @@ void fingerpritnsOptions()
     printf("Enter number: \n");
     while(!EUSART1_is_rx_ready());
         
-    uint8_t c;
-    c = EUSART1_Read();  
-        switch(c)
+    uint8_t t;
+    t = EUSART1_Read();  
+        switch(t)
         {
             case '1':
-                regFingerprints(0);
+                //regFingerprints(0);
                 break;
             
             case '2':
-                checknoFingerprints();
+                //checknoFingerprints();
                 break;
                 
             case '3':
-                deleteFingerprint();
+                //deleteFingerprint();
                 break;
                 
             default:
@@ -296,7 +484,7 @@ void menu()
                 printf("Turn Alarm OFF... \n");
                 break;
             case '3':
-                fingerprintOptions();
+                fingerpritnsOptions();
                 break;
         }
     }
@@ -304,58 +492,3 @@ void menu()
     
 }
 
-void main(void)
-{
-    // Initialize the device
-    SYSTEM_Initialize();
-    
-    // If using interrupts in PIC18 High/Low Priority Mode you need to enable the Global High and Low Interrupts
-    // If using interrupts in PIC Mid-Range Compatibility Mode you need to enable the Global and Peripheral Interrupts
-    // Use the following macros to:
-
-    // Enable the Global Interrupts
-    INTERRUPT_GlobalInterruptEnable();
-
-    // Disable the Global Interrupts
-    //INTERRUPT_GlobalInterruptDisable();
-
-    // Enable the Peripheral Interrupts
-    INTERRUPT_PeripheralInterruptEnable();
-
-    //Disable the Peripheral Interrupts
-    INTERRUPT_PeripheralInterruptDisable();
-    /**
-    cekaj na zahtev
-    ako zahtev - stanje = parsiraj zahtev
-    u suprotnom cekaj
-    ako zahtev dobar - ocitaj senzor
-    ako zahtev nije dobar predhodni korak
-    ocitan senzor - interpetiraj rezultate
-    ako ocitavanje ne uspe jos jednom
-    ako nije dobra interpetacija ponovo procitaj podatak
-    ako je dobar posalji odgovor 
-    ako je uspeo da posaje 
-    */ 
-    
-    // napraviti stanja i switch case momente 
-    // SWITCH CASE STANJE
-    
-    
-    bool flag = 1;
-    char s;
-    // EUSART2 WRITE IF EUSART 1 READ    
-    while (1)
-    {   
-        printf("1. Compare Fingerprints\n");
-        printf("Input y/n: \n"); 
-        while(!EUSART1_is_rx_ready())
-            
-        if(EUSART1_is_rx_ready())
-        {        
-            obrada_zahteva();
-        }
-    }
-}
-/**
- End of File
-*/
